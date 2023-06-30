@@ -1,4 +1,12 @@
 html {
-  color: dark-blue;
+  background-image: linear-gradient(to bottom right, #00FFFF, #00AAAA);
   font-color: white;
+}
+
+a {
+  color: #ffffff;
+}
+
+a :hover {
+  color: #cccccc;
 }
