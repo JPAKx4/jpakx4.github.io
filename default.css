@@ -9,7 +9,7 @@ html {
   opacity: 0;
 
   animation: showBody 1s ease-in-out forwards;
-  animation-delay: 4s;
+  animation-delay: 4.5s;
 }
 
 @keyframes showBody {
@@ -27,7 +27,7 @@ html {
   transform: translate(-50%, 0%);
 
   animation: moveNamePlate 1s ease-in-out forwards;
-  animation-delay: 3.5s;
+  animation-delay: 4s;
 }
 
 @keyframes moveNamePlate {
@@ -41,8 +41,8 @@ html {
 }
 
 .name-plate {
-  stroke-dasharray: 300;
-  stroke-dashoffset: -300;
+  stroke-dasharray: 300 1000;
+  stroke-dashoffset: -350;
   pointer-events: none;
 
   stroke: white;
@@ -51,29 +51,35 @@ html {
   stroke-linejoin: round;
   fill: none;
 
-  animation: animatePath 3s cubic-bezier(0.0, 0.0, 0.0, 1.0) forwards;
+  animation: animatePath 5s cubic-bezier(0.25, 0.25, 0.30, 1) forwards;
 }
 
 @keyframes animatePath {
+  70% {
+    stroke-dashoffset: 0;
+    fill: rgba(255, 255, 255, 0);
+  }
   100% {
     stroke-dashoffset: 0;
+    fill: white;
   }
 }
 
 .ring {
   stroke-dasharray: 90 10;
-  stroke-dashoffset: -20;
+  stroke-dashoffset: -19;
   stroke-width: 20px;
+  stroke-linecap: round;
   transform: rotate(60deg);
 
   fill: none;
 
-  animation: ringReveal ease-in-out 3s forwards;
+  animation: ringReveal ease-out 3s forwards;
 }
 
 @keyframes ringReveal {
   to {
-    stroke-dashoffset: 80;
+    stroke-dashoffset: 81;
   }
 }
 
