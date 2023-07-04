@@ -1,8 +1,22 @@
-/*https://www.color-hex.com/color-palette/13122*/
+:root {
+  --quality-banner-height: 12vw;
+  --dark-grey: #1c1c1c;
+  --pink: #ff008d;
+  --blue: #001eff;
+  --purple: #8900ff;
+}
+
+@font-face {
+  font-family: Slabo; 
+  font-style: normal;
+  font-weight: 400;
+  src: url(Slabo27px-Regular.ttf);
+}
 
 html {
   background-color: #1c1c1c;
   color: white;
+  font-family: Slabo;
 }
 
 .content {
@@ -83,14 +97,110 @@ html {
   }
 }
 
+.slider-bar {
+  position: absolute;
+  height: var(--quality-banner-height);
+  width: 1vw;
+  border-radius: 1vw;
+  background: white;
+}
+
+.quality-banner {
+  position: relative;
+  height: var(--quality-banner-height);
+}
+
+.quality-banner > :nth-child(2) > :nth-child(1){
+  clip-path: polygon(calc((100% - var(--window-x) / 2) + var(--mouse-x)) 0%, 
+                     calc((100% - var(--window-x) / 2) + var(--mouse-x)) 100%, 
+                     100% 100%, 
+                     100% 0%
+  );
+  
+  background-image: linear-gradient(90deg, var(--purple), var(--dark-grey))
+}
+
+.quality-banner > :nth-child(2) > :nth-child(2){
+  clip-path: polygon(calc(var(--mouse-x) - var(--window-x) / 2) 0%, 
+                     calc(var(--mouse-x) - var(--window-x) / 2) 100%, 
+                     0% 100%, 
+                     0% 0%
+  );
+
+  background-image: linear-gradient(90deg, var(--dark-grey), var(--blue))
+}
+
+.quality-banner > :nth-child(3) > :nth-child(1){
+  clip-path: polygon(calc((100% - var(--window-x) / 2) + var(--mouse-x)) 0%, 
+                     calc((100% - var(--window-x) / 2) + var(--mouse-x)) 100%, 
+                     0% 100%, 
+                     0% 0%);
+}
+
+.quality-banner > :nth-child(3) > :nth-child(2){
+  clip-path: polygon(calc(var(--mouse-x) - var(--window-x) / 2) 0%, 
+                     calc(var(--mouse-x) - var(--window-x) / 2) 100%, 
+                     100% 100%, 
+                     100% 0%);
+}
+
+.quality-banner-element-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--quality-banner-height);
+  width: 100vw;
+
+  position: absolute; 
+  top:0; 
+  left:50%; 
+  transform: translate(-50%, 0);
+}
+
+.quality-banner-element-container object {
+  height: calc(var(--quality-banner-height) - 2vw);
+  padding: 1vw;
+  display: flex;
+  justify-content: center;
+}
+
+.quality-container {
+  position: static;
+  display: flex;
+  padding: 0 2vw 0 2vw;
+  user-select: none;
+  height: var(--quality-banner-height);
+}
+
+.left-quality-container {
+  justify-content: left;
+  margin-right: auto;
+  flex: 1;
+}
+
+.right-quality-container {
+  justify-content: right;
+  margin-left: auto;
+  flex: 1;
+}
+
+.text-quality-container {
+  font-size: 6vw;
+}
+
+.text-quality-container h2 {
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  height: 24vh;
+}
+
 a {
   color: #ffffff;
 }
 
 a :hover {
   color: #aaaaaa;
-}
-
-header {
-  height: 24vh;
 }
