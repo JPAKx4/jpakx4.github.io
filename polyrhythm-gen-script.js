@@ -173,7 +173,7 @@ function updateDistance(curve_data){
         curve_data.nextSoundDistance = (curve_data.nextSoundDistance % 2) + 1;
         
         if(sound_enabled){
-            loadAudioSample('audio/c4.mp3')
+            loadAudioSample('audio/C4.mp3')
                 .then(sample => playAudioSample(sample, curve_data.pitch));
         }
     }
