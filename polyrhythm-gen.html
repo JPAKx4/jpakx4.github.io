@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Polyrhythm Generator</title>
+        <link id="default-style" rel="stylesheet" href="default.css">
+        <link id="polyrhythm-gen-style" rel="stylesheet" href="polyrhythm-gen-style.css">
+        <script src="polyrhythm-gen-script.js" await></script> 
+    </head>
+    <body onload="ready()">
+        <div class="top-container">
+            <canvas id="Polyrhythm-Canvas" class="generated-area" width="750px" height="750px">Canvas did not load</canvas>
+            <div class="parameters">
+                <h1>Parameters</h1>
+                <p>Note: click on screen to play audio.</p>
+                <div id="parameter-container" class="parameter-container">
+                    <div class="input-wrapper">
+                        <button type="button" onclick="updateJsonData()">Update</button>
+                        <button type="button" onclick="showJsonData()">JSON Data</button>
+                        <button type="button" onclick="showEmbedData()">Embed</button>
+                        
+                        <div id="use-json">
+                            <h3>Use JSON data:</h3>
+                            <input id="add-json-data" value="Paste JSON here" type="text">
+                            <button type="button" onclick="useJsonData()">Use JSON</button>
+                        </div>
+                        
+                        <div id="json-container" class="shown-by-button-container">
+                            <h3 style="margin: 0;">JSON data:</h3>
+                            <input class="json-data" id="json-data" type="text">
+                        </div>
+
+                        <div id="embed-container" class="shown-by-button-container">
+                            <h3 style="margin: 0;">Embed data:</h3>
+                            <input class="embed-data" id="embed-data" type="text">
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Colors</h2>
+                        <div class="input-field-list field-list">
+                            <label for="circle_color">Circle Color:</label><input name="circle_color" id="circle_color" data="circle_color" type="text">
+                            <label for="line_color">Line Color:</label><input name="line_color" id="line_color" data="line_color" type="text">
+                            <label for="background_color">Background Color:</label><input name="background_color" id="background_color" data="background_color" type="text">
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Animation</h2>
+                        <div class="input-field-list field-list">
+                            <label for="count">Line Count:</label><input name="count" id="count" data="count" type="number">
+                            <label for="animation_length">Animation Length (sec):</label><input name="animation_length" id="animation_length" data="animation_length" type="number">
+                            <label for="cycle_count">Cycle Count:</label><input name="cycle_count" id="cycle_count" data="completed_cycle_count" type="number">
+                            <label for="completed_cycle_count_by_index">Cycles * Index:</label><input name="completed_cycle_count_by_index" id="completed_cycle_count_by_index" data="completed_cycle_count_by_index" type="number">
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Audio</h2>
+                        <div class="input-field-list field-list">
+                            <label for="pitch_difference">Pitch Change * Index:</label><input name="pitch_difference" id="pitch_difference" data="pitch_difference" type="number">
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Bezier Curve</h2>
+                        <div class="input-field-list">
+                            <p>Point 1 (Start)</p>
+                            <div class="point-input">
+                                <label for="p1x">X:</label><input name="p1x" id="p1x" data="bezier_curve p1 x" type="number">
+                                <label for="p1y">Y:</label><input name="p1y" id="p1y" data="bezier_curve p1 y" type="number">
+                            </div>    
+                            
+                            <p>Point 2 (End)</p>
+                            <div class="point-input">
+                                <label for="p2x">X:</label><input name="p2x" id="p2x" data="bezier_curve p2 x" type="number">
+                                <label for="p2y">Y:</label><input name="p2y" id="p2y" data="bezier_curve p2 y" type="number">
+                            </div>
+                            
+                            <p>Control Point 1</p>
+                            <div class="point-input">
+                                <label for="cp1x">X:</label><input name="cp1x" id="cp1x" data="bezier_curve cp1 x" type="number">
+                                <label for="cp1y">Y:</label><input name="cp1y" id="cp1y" data="bezier_curve cp1 y" type="number">
+                            </div>    
+                            
+                            <p>Control Point 2</p>
+                            <div class="point-input">
+                                <label for="cp2x">X:</label><input name="cp2x" id="cp2x" data="bezier_curve cp2 x" type="number">
+                                <label for="cp2y">Y:</label><input name="cp2y" id="cp2y" data="bezier_curve cp2 y" type="number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Points Offset * Index</h2>
+                        <div class="input-field-list">
+                            <p>Point 1 (Start)</p>
+                            <div class="point-input">
+                                <label for="p1x-offset">X:</label><input name="p1x-offset" id="p1x-offset" data="offset_by_index p1 x" type="number">
+                                <label for="p1y-offset">Y:</label><input name="p1y-offset" id="p1y-offset" data="offset_by_index p1 y" type="number">
+                            </div>    
+                            
+                            <p>Point 2 (End)</p>
+                            <div class="point-input">
+                                <label for="p2x-offset">X:</label><input name="p2x-offset" id="p2x-offset" data="offset_by_index p2 x" type="number">
+                                <label for="p2y-offset">Y:</label><input name="p2y-offset" id="p2y-offset" data="offset_by_index p2 y" type="number">
+                            </div>
+                            
+                            <p>Control Point 1</p>
+                            <div class="point-input">
+                                <label for="cp1x-offset">X:</label><input name="cp1x-offset" id="cp1x-offset" data="offset_by_index cp1 x" type="number">
+                                <label for="cp1y-offset">Y:</label><input name="cp1y-offset" id="cp1y-offset" data="offset_by_index cp1 y" type="number">
+                            </div>    
+                            
+                            <p>Control Point 2</p>
+                            <div class="point-input">
+                                <label for="cp2x-offset">X:</label><input name="cp2x-offset" id="cp2x-offset" data="offset_by_index cp2 x" type="number">
+                                <label for="cp2y-offset">Y:</label><input name="cp2y-offset" id="cp2y-offset" data="offset_by_index cp2 y" type="number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <h2>Points Scaling * Index</h2>
+                        <div class="input-field-list">
+                            <p>Point 1 (Start)</p>
+                            <div class="point-input">
+                                <label for="p1x-scale">X:</label><input name="p1x-scale" id="p1x-scale" data="scale_by_index p1 x" type="number">
+                                <label for="p1y-scale">Y:</label><input name="p1y-scale" id="p1y-scale" data="scale_by_index p1 y" type="number">
+                            </div>    
+                            
+                            <p>Point 2 (End)</p>
+                            <div class="point-input">
+                                <label for="p2x-scale">X:</label><input name="p2x-scale" id="p2x-scale" data="scale_by_index p2 x" type="number">
+                                <label for="p2y-scale">Y:</label><input name="p2y-scale" id="p2y-scale" data="scale_by_index p2 y" type="number">
+                            </div>
+                            
+                            <p>Control Point 1</p>
+                            <div class="point-input">
+                                <label for="cp1x-scale">X:</label><input name="cp1x-scale" id="cp1x-scale" data="scale_by_index cp1 x" type="number">
+                                <label for="cp1y-scale">Y:</label><input name="cp1y-scale" id="cp1y-scale" data="scale_by_index cp1 y" type="number">
+                            </div>    
+                            
+                            <p>Control Point 2</p>
+                            <div class="point-input">
+                                <label for="cp2x-scale">X:</label><input name="cp2x-scale" id="cp2x-scale" data="scale_by_index cp2 x" type="number">
+                                <label for="cp2y-scale">Y:</label><input name="cp2y-scale" id="cp2y-scale" data="scale_by_index cp2 y" type="number">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

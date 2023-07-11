@@ -1,0 +1,56 @@
+:root {
+    --dark-grey: #1c1c1c;
+    --pink: #ff008d;
+    --blue: #001eff;
+    --purple: #8900ff;
+}
+
+.generated-area {
+    margin-bottom: auto;
+}
+
+.top-container {
+    display: flex;
+}
+
+@media screen and (max-width: 1200px) {
+    .top-container {
+        flex-direction: column;
+    }
+}
+
+.top-container div {
+    margin-left: 1em;
+}
+
+.input-wrapper { 
+    border: var(--pink);
+    border-style: solid;
+    border-width: .1em;
+    padding: .5em;
+    margin: .5em;
+}
+
+.point-input {
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    gap: .5em;
+    width: 5em;
+}
+
+.field-list {
+    display: grid;
+    grid-template-columns: 4fr 2fr;
+    gap: .5em;
+    width: 25em;
+
+    border-radius: .1em;
+    border-color: var(--dark-grey);
+}
+
+.shown-by-button-container {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+}
+
