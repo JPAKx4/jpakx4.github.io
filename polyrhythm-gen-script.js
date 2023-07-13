@@ -1,4 +1,11 @@
-let width, height, canvas, context, bezier_data, last_update, new_update, sound_enabled, audioContext;
+let width, height, canvas, context, bezier_data, last_update, new_update, sound_enabled, audioContext, currently_rendered_type;
+
+let firstTimeLoad = true;
+
+let inputTypes = ["input", "textarea", "select"];
+
+let bezierExclusiveParameters = ["bezier_curve", "scale_by_index", "offset_by_index"];
+let svgExclusiveParameters = ["svg_paths"];
 
 /*
 To make them all sync up at the end of interval:
@@ -11,32 +18,51 @@ distance (or what goes in the lerp function) increases at a rate of speed.
 interval is represented by animation length
 */
 
-let json_paramaters = 
+let json_parameters = 
 {
     count: 12,
     animation_length: 60,
     completed_cycle_count: 15,
     completed_cycle_count_by_index: -1,
+    width: 750,
+    height: 750,
+
+    precentage_enabled: false,
+    precentage_amount: {},
+
     line_color: "#aaaaaa",
+    line_color_by_index_enabled: false,
+    line_color_by_index: {},
+
     circle_color: "#ffffff",
+    circle_color_by_index_enabled: false,
+    circle_color_by_index: {},
+
     background_color: "#1c1c1c",
-    pitch_difference: 2,
+
+    pitch_difference: 1,
+    pitch_by_index_enabled: false,
+    pitch_by_index: {},
+
+    selectedType: "bezier",
+    fill_mode: "both",
+
     bezier_curve: {
         p1: {
             x: 350,
-            y: 0
+            y: 750
         },
         p2: {
             x: 400,
-            y: 0
+            y: 750
         },
         cp1: {
             x: 375,
-            y: 50
+            y: 700
         },
         cp2: {
             x: 375,
-            y: 50
+            y: 700
         }
     },
     scale_by_index: {
@@ -68,20 +94,45 @@ let json_paramaters =
         },
         cp1 : {
             x: 0,
-            y: (4/3)*30
+            y: -(4/3)*30
         },
         cp2 : {
             x: 1,
-            y: (4/3)*30
+            y: -(4/3)*30
         }
+    },
+    svg_paths: {
+
     }
 }
 
 function ready(){
     canvas = document.getElementById("Polyrhythm-Canvas");
-    height =  canvas.height;
-    width = canvas.width;
+
     sound_enabled = false;
+
+    let params = new URLSearchParams(location.search);
+    let embed = params.get("embed");
+    if(embed == "true"){
+        let parametersElement = document.getElementById("parameters");
+        parametersElement.remove();
+    }
+
+    if(firstTimeLoad){
+        firstTimeLoad = false;
+
+        let jsonData = params.get("jsonData");
+        console.log("json data encoded: " + jsonData);
+        if(jsonData != null){
+            decodeJson(jsonData);
+        }
+    }
+
+    height =  json_parameters.height;
+    width = json_parameters.width;
+    
+    canvas.setAttribute("height", height);
+    canvas.setAttribute("width", width);
 
     clearInterval();
 
@@ -94,7 +145,8 @@ function ready(){
     }
     context = canvas.getContext("2d");
 
-    bezier_data = createBezierData();
+    path_data = createPathData();
+    console.log("type: " + currently_rendered_type);
 
     last_update = Date.now();
 
@@ -104,26 +156,29 @@ function ready(){
 }
 
 function update() {
+
     new_update = Date.now();
 
     context.clearRect(0, 0, width, height);
 
     context.rect(0, 0, width, height);
-    context.strokeStyle = json_paramaters.background_color;
-    context.stroke;
+    context.strokeStyle = json_parameters.background_color;
+    context.stroke();
 
-    context.strokeStyle = json_paramaters.line_color;
-    for(let i = 0; i < json_paramaters.count; i++){
-        context.beginPath();
-        drawBezierCurve(bezier_data[i]);
-        updateDistance(bezier_data[i]);
-        context.stroke();
+    for(let i = 0; i < json_parameters.count; i++){
+        context.strokeStyle = path_data[i].lineColor;
+        if(currently_rendered_type == "bezier"){
+            drawBezierCurve(path_data[i]);
+        } else if(currently_rendered_type == "svg"){
+            drawSVG(path_data[i]);
+        }
+        updateDistance(path_data[i]);
     }
 
-    context.fillStyle = json_paramaters.circle_color;
-    for(let i = 0; i < json_paramaters.count; i++){
+    for(let i = 0; i < json_parameters.count; i++){
+        context.fillStyle = path_data[i].circleColor;
         context.beginPath();
-        drawCircle(bezier_data[i]);
+        drawPointAlongLine(path_data[i]);
         context.fill();
     }
 
@@ -132,37 +187,81 @@ function update() {
 }
 
 function updateJsonData() {
-    let parameterContainer = document.getElementById("parameter-container");
-    let inputs = parameterContainer.getElementsByTagName("input");
-
-    for(let i = 0; i < inputs.length; i++){
-        if(!inputs[i].getAttribute("data")) continue;
-
-        let jsonKeyArray = inputs[i].getAttribute("data").split(" ");
-
-        let value = inputs[i].value;
-
-        if(!isNaN(parseInt(value))){
-            value = parseInt(value);
-        }
-
-        console.log(value);
-
-        setDataArray(jsonKeyArray, value);
+    for(let i = 0; i < inputTypes.length; i++){
+        updateJsonDataOfInputType(inputTypes[i]);
     }
 
     ready();
 }
 
-function updateTextFields() {
+function updateJsonDataOfInputType(inputType){
     let parameterContainer = document.getElementById("parameter-container");
-    let inputs = parameterContainer.getElementsByTagName("input");
+
+    let inputs = parameterContainer.getElementsByTagName(inputType);
+    for(let i = 0; i < inputs.length; i++){
+        if(!inputs[i].getAttribute("data")) continue;
+
+        let jsonKeyArray = inputs[i].getAttribute("data").split(" ");
+
+        let value;
+        if(inputs[i].type == "checkbox"){
+            value = inputs[i].checked;
+        } else {
+            value = inputs[i].value;
+        }
+
+        if(!isNaN(parseFloat(value))){
+            value = parseFloat(value);
+        }
+
+        setDataArray(jsonKeyArray, value);
+    }
+}
+
+function updateTextFields() {
+    if(json_parameters.selectedType == "svg"){
+        selectSVG();
+        updateCountOfFields("svg-type", "svg-input", "svg_paths path");
+    }
+
+    if(json_parameters.precentage_enabled){
+        updateCountOfFields('precentage-amount-container', 'precentage-input', 'precentage_amount amount', '1');
+    }
+
+    if(json_parameters.circle_color_by_index_enabled) {
+        updateCountOfFields('circle-color-by-index-container', 'circle-color-input', 'circle_color_by_index color', '#ffffff');
+    }
+
+    if(json_parameters.line_color_by_index_enabled) {
+        updateCountOfFields('line-color-by-index-container', 'line-color-input', 'line_color_by_index color', '#aaaaaa');
+    }
+
+    if(json_parameters.pitch_by_index_enabled){
+        updateCountOfFields('pitch-by-index-container', 'pitch-by-index', 'pitch_by_index pitch', '1');
+    }
+
+    for(let i = 0; i < inputTypes.length; i++){
+        updateTextFieldsOfInputType(inputTypes[i]);
+    }
+}
+
+function updateTextFieldsOfInputType(inputType){
+    let parameterContainer = document.getElementById("parameter-container");
+    
+    if(parameterContainer == null) return;
+
+    let inputs = parameterContainer.getElementsByTagName(inputType);
 
     for(let i = 0; i < inputs.length; i++){
         if(!inputs[i].getAttribute("data")) continue;
 
         let jsonKeyArray = inputs[i].getAttribute("data").split(" ");
-        inputs[i].value = getDataArray(jsonKeyArray);
+
+        if(inputs[i].type == "checkbox"){
+            inputs[i].checked = getDataArray(jsonKeyArray);
+        } else {
+            inputs[i].value = getDataArray(jsonKeyArray);
+        }
     }
 }
 
@@ -170,36 +269,98 @@ function updateDistance(curve_data){
     curve_data.distance = curve_data.speed*((new_update - last_update)/1000) + curve_data.distance;
 
     if(curve_data.distance >= curve_data.nextSoundDistance){
-        curve_data.nextSoundDistance = (curve_data.nextSoundDistance % 2) + 1;
+        if(json_parameters.fill_mode == "both"){
+            curve_data.nextSoundDistance = (curve_data.nextSoundDistance % 2) + curve_data.soundInterval;
+        } else {
+            curve_data.nextSoundDistance = (curve_data.nextSoundDistance % 1) + curve_data.soundInterval;
+        }
+
+        console.log(curve_data.nextSoundDistance + " " + curve_data.soundInterval + " " + curve_data.pitch);
         
         if(sound_enabled){
-            loadAudioSample('audio/c4.mp3')
+            loadAudioSample('audio/C4.mp3')
                 .then(sample => playAudioSample(sample, curve_data.pitch));
         }
     }
 
-    curve_data.distance = curve_data.distance % 2;
+    if(json_parameters.fill_mode == "both"){
+        curve_data.distance = curve_data.distance % 2;
+    } else {
+        curve_data.distance = curve_data.distance % 1;
+    }
 }
 
-function createBezierData(){
+function createPathData(){
     let data = [];
-    let offset = json_paramaters.offset_by_index;
-    let scale = json_paramaters.scale_by_index;
-
-    let initial_curve = json_paramaters.bezier_curve;
-
-    for(let i = 0; i < json_paramaters.count; i++){
-        data[i] = {
-            p1: scaleAndOffsetByIndex(initial_curve.p1, offset.p1, scale.p1, i),
-            p2: scaleAndOffsetByIndex(initial_curve.p2, offset.p2, scale.p2, i),
-            cp1: scaleAndOffsetByIndex(initial_curve.cp1, offset.cp1, scale.cp1, i),
-            cp2: scaleAndOffsetByIndex(initial_curve.cp2, offset.cp2, scale.cp2, i),
-            speed: 2*(json_paramaters.completed_cycle_count + json_paramaters.completed_cycle_count_by_index*i) / json_paramaters.animation_length,
-            distance: 0,
-            nextSoundDistance: 1,
-            pitch: Math.pow(2, (json_paramaters.pitch_difference*i + 1)/12)
-        };
+    let speedScale;
+    if(json_parameters.fill_mode == "both"){
+        speedScale = 2;
+    } else {
+        speedScale = 1;
     }
+
+    currently_rendered_type = json_parameters.selectedType;
+
+    if(currently_rendered_type == "bezier"){
+        let offset = json_parameters.offset_by_index;
+        let scale = json_parameters.scale_by_index;
+    
+        let initial_curve = json_parameters.bezier_curve;
+
+        for(let i = 0; i < json_parameters.count; i++){
+            data[i] = {
+                p1: scaleAndOffsetByIndex(initial_curve.p1, offset.p1, scale.p1, i),
+                p2: scaleAndOffsetByIndex(initial_curve.p2, offset.p2, scale.p2, i),
+                cp1: scaleAndOffsetByIndex(initial_curve.cp1, offset.cp1, scale.cp1, i),
+                cp2: scaleAndOffsetByIndex(initial_curve.cp2, offset.cp2, scale.cp2, i),
+            };
+        }
+    } else if (currently_rendered_type == "svg"){
+        let svgPathData = json_parameters.svg_paths;
+
+        for(let i = 0; i < json_parameters.count; i++){
+            let pathNode = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathNode.setAttribute("d", svgPathData["path" + i]);
+
+            data[i] = {
+                node: pathNode,
+                length: pathNode.getTotalLength()
+            }
+        }
+    }
+
+    for(let i = 0; i < json_parameters.count; i++){
+        let newSoundInterval = 1;
+
+        if(json_parameters.precentage_enabled){
+            newSoundInterval = json_parameters.precentage_amount["amount" + i];
+        }
+
+        data[i].soundInterval = newSoundInterval;
+        data[i].nextSoundDistance = newSoundInterval;
+        data[i].speed = speedScale*(json_parameters.completed_cycle_count + json_parameters.completed_cycle_count_by_index*i) / json_parameters.animation_length;
+        data[i].distance = 0;
+
+        if(json_parameters.pitch_by_index_enabled) {
+            data[i].pitch = Math.pow(2, (json_parameters.pitch_by_index["pitch" + i] + 1)/12);
+        } else {
+            data[i].pitch = Math.pow(2, (json_parameters.pitch_difference*i + 1)/12);
+        }
+
+        if(json_parameters.line_color_by_index_enabled){
+            data[i].lineColor = json_parameters.line_color_by_index["color" + i];
+        } else {
+            data[i].lineColor = json_parameters.line_color;
+        }
+
+        if(json_parameters.circle_color_by_index_enabled){
+            data[i].circleColor = json_parameters.circle_color_by_index["color" + i];
+        } else {
+            data[i].circleColor = json_parameters.circle_color;
+        }
+    }
+
+
 
     return data;
 }
@@ -207,7 +368,7 @@ function createBezierData(){
 function scaleAndOffsetByIndex(p, offset, scale, index){
     pCopy = {
         x: p.x*((scale.x-1)*index + 1) + offset.x*index,
-        y: height-(p.y*((scale.y-1)*index + 1) + offset.y*index)
+        y: (p.y*((scale.y-1)*index + 1) + offset.y*index)
     }
 
     return pCopy;
@@ -219,13 +380,41 @@ function drawBezierCurve(curve_data){
     let cp1 = curve_data.cp1;
     let cp2 = curve_data.cp2;
 
+    context.beginPath();
     context.moveTo(p1.x, p1.y);
     context.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, p2.x, p2.y);
+    context.stroke();
 }
 
-function drawCircle(curve_data){
-    let distance = curve_data.distance <= 1 ? curve_data.distance : 2 - curve_data.distance;
-    let center = secondOrderLerp(curve_data, distance);
+function drawSVG(curve_data){
+    let path = new Path2D(curve_data.node.getAttribute("d"));
+    context.stroke(path);
+}
+
+//SVG:
+//to make getPointAtLength() function work (number between 0-length)
+//we multiply the distance (number from 0-1) and the total length of the svg
+//this is equivelent to multiplying by a precentage of the way through
+function drawPointAlongLine(curve_data){
+    let distance;
+    let fill_mode = json_parameters.fill_mode;
+    if(fill_mode == "both"){
+        distance = curve_data.distance <= 1 ? curve_data.distance : 2 - curve_data.distance;
+    } else if(fill_mode == "forwards"){
+        distance = curve_data.distance % 2;
+    } else if(fill_mode == "backwards"){
+        distance = 2 - (curve_data.distance % 2);
+    }
+
+    let center;
+
+    if(currently_rendered_type == "bezier"){
+        center = secondOrderLerp(curve_data, distance);
+    } else if (currently_rendered_type == "svg"){
+        let totalLength = curve_data.length;
+        center = curve_data.node.getPointAtLength(distance * totalLength);
+    }
+
     context.arc(center.x, center.y, 5, 0, Math.PI*2);
 }
 
@@ -263,32 +452,37 @@ function playAudioSample(sample, rate) {
 }
 
 function setData(name, value){
-    json_paramaters[name] = value;
+    json_parameters[name] = value;
 }
 
 function setDataArray(nameArray, value){
-    targetedKey = json_paramaters;
+    targetedKey = json_parameters;
     for(let i = 0; i < nameArray.length-1; i++){
-        //console.log(targetedKey);
+        if(!targetedKey[nameArray[i]]){
+            targetedKey[nameArray[i]] = {};
+        }
         targetedKey = targetedKey[nameArray[i]];
-        //console.log(targetedKey);
+    }
+
+    if(!targetedKey[nameArray[nameArray.length-1]]){
+        targetedKey[nameArray[nameArray.length-1]] = [];
     }
     targetedKey[nameArray[nameArray.length-1]] = value;
 }
 
 function getDataArray(nameArray) {
-    targetedKey = json_paramaters;
+    targetedKey = json_parameters;
     for(let i = 0; i < nameArray.length-1; i++){
-        //console.log(targetedKey);
         targetedKey = targetedKey[nameArray[i]];
-        //console.log(targetedKey);
     }
     return targetedKey[nameArray[nameArray.length-1]];
 }
 
 function showJsonData(){
+    stripJsonData();
+
     let field = document.getElementById("json-data");
-    field.value = JSON.stringify(json_paramaters);
+    field.value = JSON.stringify(json_parameters);
 
     let parent = document.getElementById("json-container");
     parent.style.visibility = "visible";
@@ -297,7 +491,8 @@ function showJsonData(){
 
 function showEmbedData(){
     let field = document.getElementById("embed-data");
-    field.value = "EMBED GOES HERE";
+    let base64String = encodeJson();
+    field.value = "<embed type=\"text/html\" src=\"https://jordan-garner.com/polyrhythm-gen.html?embed=true&jsonData=" + base64String + "\" width=\"" + json_parameters.width + "\" height=\"" + json_parameters.height + "\">";
 
     let parent = document.getElementById("embed-container");
     parent.style.visibility = "visible";
@@ -306,9 +501,146 @@ function showEmbedData(){
 
 function useJsonData(){
     let textField = document.getElementById("add-json-data");
-    jsonString = textField.value;
+    let jsonString = textField.value;
 
-    json_paramaters = JSON.parse(jsonString);
+    json_parameters = JSON.parse(jsonString);
 
     ready();
+}
+
+function encodeJson(){
+    stripJsonData();
+
+    let jsonString = JSON.stringify(json_parameters);
+    return btoa(jsonString);
+}
+
+function stripJsonData(){
+    json_parameters.selectedType = currently_rendered_type;
+
+    if(currently_rendered_type == "bezier"){
+        //remove SVG exclusive items
+        removeParametersFromJson(svgExclusiveParameters);
+    } else if (currently_rendered_type == "svg"){
+        //remove bezier exclusive items
+        removeParametersFromJson(bezierExclusiveParameters);
+    }
+
+    if(!json_parameters.precentage_enabled){
+        removeParametersFromJson("precentage_amount");
+    }
+
+    if(!json_parameters.circle_color_by_index_enabled){
+        removeParametersFromJson("circle_color_by_index");
+    }
+
+    if(!json_parameters.line_color_by_index_enabled){
+        removeParametersFromJson("line_color_by_index");
+    }
+}
+
+function removeParametersFromJson(parameterArray){
+    for(let i = 0; i < parameterArray.length; i++){
+        if(json_parameters[parameterArray[i]]){
+            delete json_parameters[parameterArray[i]];
+        }
+    }
+}
+
+function showLink(){
+    let textField = document.getElementById("share-data");   
+    let base64String = encodeJson();
+
+    textField.value = "https://jordan-garner.com/polyrhythm-gen.html?jsonData=" + base64String;
+
+    let parent = document.getElementById("share-container");
+    parent.style.visibility = "visible";
+    parent.style.height = "unset";
+}
+
+function decodeJson(encodedString) {
+    let decodedString = atob(encodedString);
+
+    let newJson = JSON.parse(decodedString);
+
+    for (const key in newJson){
+        json_parameters[key] = newJson[key];
+    }
+}
+
+function selectBezier(){
+    json_parameters["selectedType"] = "bezier";
+
+    removeClass("bezier-type", "hidden");
+    addClass("bezier-selector", "selected");
+
+    addClass("svg-type", "hidden");
+    removeClass("svg-selector", "selected");
+}
+
+function selectSVG(){
+    json_parameters["selectedType"] = "svg";
+
+    removeClass("svg-type", "hidden");
+    addClass("svg-selector", "selected");
+
+    addClass("bezier-type", "hidden");
+    removeClass("bezier-selector", "selected");
+}
+
+function addClass(classToAddTo, classToAdd){
+    let elements = document.getElementsByClassName(classToAddTo);
+   
+    for(let i = 0; i < elements.length; i++){
+        elements[i].classList.add(classToAdd);
+    }
+} 
+
+function removeClass(classToRemoveFrom, classToRemove){
+    let elements = document.getElementsByClassName(classToRemoveFrom);
+   
+    for(let i = 0; i < elements.length; i++){
+        elements[i].classList.remove(classToRemove);
+    }
+}
+
+function updateCountOfFields(idOfParent, childClass, dataAttribute, defaultValue){
+    let parent = document.getElementById(idOfParent);
+    let children = parent.getElementsByClassName(childClass);
+
+    let fieldCount = json_parameters.count;
+
+    let childCount = children.length;
+
+    if(childCount > fieldCount){
+    
+        for(let i = childCount-1; i > fieldCount-1; i--){
+            children[i].remove();
+            childCount--;
+        }
+    } else if(childCount < fieldCount){
+        for(let i = childCount; i < fieldCount; i++){
+            let divNode = document.createElement("div");
+            divNode.classList.add(childClass);
+
+            parent.appendChild(divNode);
+            
+            let labelNode = document.createElement("label");
+            labelNode.innerHTML = `Index ${i} Line:`;
+            labelNode.setAttribute("for", childClass + i);
+
+            divNode.appendChild(labelNode);
+
+            let textField = document.createElement("textarea");
+            textField.classList.add(childClass + "-field")
+            textField.value = defaultValue;
+            textField.id = childClass + i;
+
+            if(dataAttribute){
+                textField.setAttribute("data", dataAttribute + i);
+            }
+
+            divNode.appendChild(textField);
+        }
+    }
 }

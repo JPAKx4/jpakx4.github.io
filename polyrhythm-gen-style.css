@@ -11,12 +11,7 @@
 
 .top-container {
     display: flex;
-}
-
-@media screen and (max-width: 1200px) {
-    .top-container {
-        flex-direction: column;
-    }
+    flex-wrap: wrap;
 }
 
 .top-container div {
@@ -40,9 +35,8 @@
 
 .field-list {
     display: grid;
-    grid-template-columns: 4fr 2fr;
+    grid-template-columns: auto auto;
     gap: .5em;
-    width: 25em;
 
     border-radius: .1em;
     border-color: var(--dark-grey);
@@ -54,3 +48,37 @@
     overflow: hidden;
 }
 
+input, select {
+    width: 12vw;
+}
+
+.type-selector {
+    display: flex;
+}
+
+.type-selector h2 {
+    padding-left: 1vw;
+    padding-right: 1vw;
+}
+
+.selected {
+    text-decoration: underline;
+}
+
+.hidden {
+    height: 0;
+    visibility: hidden;
+}
+
+.bezier-selector, .svg-selector {
+    cursor: pointer;
+}
+
+:is(.bezier-selector, .svg-selector):hover{
+    color: var(--pink);
+}
+
+textarea {
+    margin-left: 1em;
+    width: auto;
+}
