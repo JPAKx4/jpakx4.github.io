@@ -4,6 +4,7 @@ let root;
 let target;
 let current;
 let lerpSpeed = .1;
+let offset;
 
 function start(){
     svgLogosAsPathArray = getLogos()
@@ -11,46 +12,48 @@ function start(){
 
     root = document.documentElement;
 
-    root.style.setProperty("--window-x", window.innerWidth + "px");
-    root.style.setProperty("--mouse-x", "50vw");
+    offset = 0*document.getElementsByClassName("slider-bar")[0].clientWidth/8;
+
+    root.style.setProperty("--window-x", document.body.clientWidth + "px");
+    root.style.setProperty("--mouse-x", (document.body.clientWidth/2 + offset) + "px");
 
     $(".quality-banner").on("mousemove", function ( event ) {
         event.stopImmediatePropagation();
-        var xPos = event.pageX;
+        var xPos = event.pageX + offset;
         target = xPos;
     });
 
     $(".quality-banner").on("mouseleave", function ( event ){
-        target = window.innerWidth / 2;
+        target = document.body.clientWidth/2 + offset;
     });
 
     $(".quality-banner").on("touchmove", function ( event ) {
         event.stopImmediatePropagation();
         
-        var touch = event.originalEvent.changedTouches[0]
-        var xPos = touch.clientX;
+        var touch = event.originalEvent.changedTouches[0];
+        var xPos = touch.clientX + offset;
         target = xPos;
     });
 
     $(".quality-banner").on("touchleave", function ( event ){
-        target = window.innerWidth / 2;
+        target = document.body.clientWidth/2 + offset;
     });
 
     $(window).resize(function(){
-        root.style.setProperty("--window-x", window.innerWidth + "px");
+        root.style.setProperty("--window-x", document.body.clientWidth + "px");
       });
 
-    target = window.innerWidth / 2;
-    current = window.innerWidth / 2;
+    target = document.body.clientWidth/2 + offset;
+    current = document.body.clientWidth/2 + offset;
 
     setInterval(changeX, 10);
 }
 
 function changeX(){
-    if(Math.abs(current-target) < 0.1) return;
+    if(Math.abs(current+ offset - target) < 0.01) return;
 
     current = lerp(current, target, lerpSpeed);
-    root.style.setProperty("--mouse-x", current + "px");
+    root.style.setProperty("--mouse-x", (current + offset) + "px");
 }
 
 
