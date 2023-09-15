@@ -201,6 +201,132 @@ a {
   color: #ffffff;
 }
 
-a :hover {
+a:hover {
   color: #aaaaaa;
+}
+
+.card-container {
+  position: relative;
+  padding: 5vh;
+  height: 50vw;
+}
+
+.card-parent {
+  position: absolute;
+}
+
+.card-parent:hover {
+  z-index: 2;
+
+  .card{
+    animation-name: flip;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+  }
+
+  .splash {
+    animation-name: flip-splash;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+  }
+
+  .non-splash {
+    animation-name: flip-non-splash;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+  }
+}
+
+
+.card {
+  transform-origin: center;
+  height: 50vh;
+  aspect-ratio: 2/3;
+  border-radius: 1vw;
+  background-color: #001eff;
+  border-width: 1vw;
+  border-color: #ff008d;
+  border-style: solid;
+  box-shadow: .5vw .5vw #8900ff;
+}
+
+@keyframes flip {
+  from{
+    transform: rotateY(0);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes flip-splash {
+  from {
+    position: relative;
+    visibility: visible;
+  }
+  50% {
+    position: relative;
+    visibility: visible;
+  }
+  50.1% {
+    position: absolute;
+    visibility: hidden;
+  }
+  to {
+    position: absolute;
+    visibility: hidden;
+  }
+}
+
+@keyframes flip-non-splash {
+  from {
+    position: absolute;
+    visibility: hidden;
+  }
+  50%{
+    position: absolute;
+    visibility: hidden;
+  }
+  50.1% {
+    position: relative;
+    visibility: visible;
+  }
+  to {
+    position: relative;
+    visibility: visible;
+  }
+}
+
+.left {
+  left: 30%;
+  transform: translate(-50%, 10%);
+  z-index: 0;
+}
+
+.right {
+  left: 70%;
+  transform: translate(-50%, 10%);
+  z-index: 0;
+}
+
+.center {
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 1;
+}
+
+.non-splash {
+  transform: rotateY(180deg);
+  position: absolute;
+  visibility: hidden;
+  object-fit: cover;
+}
+
+.splash > img {
+  position: relative;
+  object-fit: cover;
+  overflow: hidden;
+  display: block;
+  height: 50vh;
+  width: 100%;
 }
