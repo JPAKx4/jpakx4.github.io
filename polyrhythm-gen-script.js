@@ -7,6 +7,8 @@ let inputTypes = ["input", "textarea", "select"];
 let bezierExclusiveParameters = ["bezier_curve", "scale_by_index", "offset_by_index"];
 let svgExclusiveParameters = ["svg_paths"];
 
+let sounds = {};
+
 /*
 To make them all sync up at the end of interval:
 speed = distance/time
@@ -278,8 +280,7 @@ function updateDistance(curve_data){
         console.log(curve_data.nextSoundDistance + " " + curve_data.soundInterval + " " + curve_data.pitch);
         
         if(sound_enabled){
-            loadAudioSample('audio/C4.mp3')
-                .then(sample => playAudioSample(sample, curve_data.pitch));
+            playAudioSample('audio/C4.mp3', curve_data.pitch);
         }
     }
 
@@ -443,12 +444,22 @@ function loadAudioSample(url) {
     .then(buffer => audioContext.decodeAudioData(buffer));
 }
 
-function playAudioSample(sample, rate) {
-  const source = audioContext.createBufferSource();
-  source.buffer = sample;
-  source.playbackRate.value = rate;
-  source.connect(audioContext.destination);
-  source.start(0);
+async function getSound(url, rate) {
+    const url_rate = url + "" + rate;
+    if(sounds[url_rate] !== undefined){
+        return sounds[url_rate]
+    } else {
+        const source = audioContext.createBufferSource();
+        source.buffer = await loadAudioSample(url);
+        source.playbackRate.value = rate;
+        source.connect(audioContext.destination);
+        sounds[url_rate] = source;
+    }
+}
+
+async function playAudioSample(url, rate) {
+    source = await getSound(url, rate)
+    source.start(0);
 }
 
 function setData(name, value){
