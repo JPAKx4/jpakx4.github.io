@@ -7,7 +7,9 @@ let inputTypes = ["input", "textarea", "select"];
 let bezierExclusiveParameters = ["bezier_curve", "scale_by_index", "offset_by_index"];
 let svgExclusiveParameters = ["svg_paths"];
 
-let sounds = {};
+let audioSampleCache = {};
+
+const defaultJson = {"count":12,"animation_length":60,"completed_cycle_count":15,"completed_cycle_count_by_index":-1,"width":750,"height":750,"precentage_enabled":false,"precentage_amount":{},"line_color":"#aaaaaa","line_color_by_index_enabled":true,"line_color_by_index":{"color0":"red","color1":"orangered","color2":"orange","color3":"orangeyellow","color4":"yellow","color5":"yellowgreen","color6":"green","color7":"greenblue","color8":"blue","color9":"bluepurple","color10":"purple","color11":"white"},"circle_color":"#ffffff","circle_color_by_index_enabled":false,"circle_color_by_index":{},"background_color":"#1c1c1c","pitch_difference":2,"pitch_by_index_enabled":false,"pitch_by_index":{"pitch0":1,"pitch1":1,"pitch2":1,"pitch3":1,"pitch4":1,"pitch5":1,"pitch6":1,"pitch7":1,"pitch8":1,"pitch9":1,"pitch10":1,"pitch11":1},"selectedType":"bezier","fill_mode":"both","bezier_curve":{"p1":{"x":350,"y":750},"p2":{"x":400,"y":750},"cp1":{"x":375,"y":700},"cp2":{"x":375,"y":700}},"scale_by_index":{"p1":{"x":1,"y":1},"p2":{"x":1,"y":1},"cp1":{"x":1,"y":1},"cp2":{"x":1,"y":1}},"offset_by_index":{"p1":{"x":-30,"y":0},"p2":{"x":30,"y":0},"cp1":{"x":0,"y":-40},"cp2":{"x":1,"y":-40}}}
 
 /*
 To make them all sync up at the end of interval:
@@ -124,9 +126,13 @@ function ready(){
         firstTimeLoad = false;
 
         let jsonData = params.get("jsonData");
-        console.log("json data encoded: " + jsonData);
         if(jsonData != null){
+            console.log("json data decoded: ", jsonData);
             decodeJson(jsonData);
+        } else {
+            for (const key in defaultJson){
+                json_parameters[key] = defaultJson[key];
+            }
         }
     }
 
@@ -148,7 +154,7 @@ function ready(){
     context = canvas.getContext("2d");
 
     path_data = createPathData();
-    console.log("type: " + currently_rendered_type);
+    //console.log("type: " + currently_rendered_type);
 
     last_update = Date.now();
 
@@ -277,7 +283,7 @@ function updateDistance(curve_data){
             curve_data.nextSoundDistance = (curve_data.nextSoundDistance % 1) + curve_data.soundInterval;
         }
 
-        console.log(curve_data.nextSoundDistance + " " + curve_data.soundInterval + " " + curve_data.pitch);
+        //console.log(curve_data.nextSoundDistance + " " + curve_data.soundInterval + " " + curve_data.pitch);
         
         if(sound_enabled){
             playAudioSample('audio/C4.mp3', curve_data.pitch);
@@ -438,28 +444,29 @@ function lerp(p1, p2, t){
     return p;
 }
 
-function loadAudioSample(url) {
-  return fetch(url)
-    .then(response => response.arrayBuffer())
-    .then(buffer => audioContext.decodeAudioData(buffer));
+async function loadAudioSample(url) {
+    if(audioSampleCache[url]){
+        return audioSampleCache[url];
+    } else {
+        let response = await fetch(url)
+            .then(response => response.arrayBuffer())
+            .then(buffer => audioContext.decodeAudioData(buffer));
+        audioSampleCache[url] = response;
+        return response;
+    }    
 }
 
 async function getSound(url, rate) {
-    const url_rate = url + "" + rate;
-    if(sounds[url_rate] !== undefined){
-        return sounds[url_rate]
-    } else {
-        const source = audioContext.createBufferSource();
-        source.buffer = await loadAudioSample(url);
-        source.playbackRate.value = rate;
-        source.connect(audioContext.destination);
-        sounds[url_rate] = source;
-    }
+    const source = audioContext.createBufferSource();
+    source.buffer = await loadAudioSample(url);
+    source.playbackRate.value = rate;
+    source.connect(audioContext.destination);
+    return source;
 }
 
 async function playAudioSample(url, rate) {
     source = await getSound(url, rate)
-    source.start(0);
+    source.start(1)
 }
 
 function setData(name, value){

@@ -4,6 +4,8 @@
   --pink: #ff008d;
   --blue: #001eff;
   --purple: #8900ff;
+
+  --flip-time: .2s;
 }
 
 @font-face {
@@ -220,22 +222,45 @@ a:hover {
 
   .card{
     animation-name: flip;
-    animation-duration: .2s;
+    animation-duration: var(--flip-time);
     animation-fill-mode: forwards;
   }
 
   .splash {
     animation-name: flip-splash;
-    animation-duration: .2s;
+    animation-duration: var(--flip-time);
     animation-fill-mode: forwards;
   }
 
   .non-splash {
     animation-name: flip-non-splash;
-    animation-duration: .2s;
+    animation-duration: var(--flip-time);
     animation-fill-mode: forwards;
   }
 }
+
+.card-parent:not(:hover) {
+  z-index: 2;
+
+  .card{
+    animation-name: reverse-flip;
+    animation-duration: var(--flip-time);
+    animation-fill-mode: forwards;
+  }
+
+  .splash {
+    animation-name: reverse-flip-splash;
+    animation-duration: var(--flip-time);
+    animation-fill-mode: forwards;
+  }
+
+  .non-splash {
+    animation-name: reverse-flip-non-splash;
+    animation-duration: var(--flip-time);
+    animation-fill-mode: forwards;
+  }
+}
+
 
 
 .card {
@@ -294,6 +319,53 @@ a:hover {
   to {
     position: relative;
     visibility: visible;
+  }
+}
+
+@keyframes reverse-flip {
+  from{
+    transform: rotateY(180deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+
+@keyframes reverse-flip-splash {
+  from {
+    position: absolute;
+    visibility: hidden;
+  }
+  50% {
+    position: absolute;
+    visibility: hidden;
+  }
+  50.1% {
+    position: relative;
+    visibility: visible;
+  }
+  to {
+    position: relative;
+    visibility: visible;
+  }
+}
+
+@keyframes reverse-flip-non-splash {
+  from {
+    position: relative;
+    visibility: visible;
+  }
+  50%{
+    position: relative;
+    visibility: visible;
+  }
+  50.1% {
+    position: absolute;
+    visibility: hidden;
+  }
+  to {
+    position: absolute;
+    visibility: hidden;
   }
 }
 
